@@ -12,7 +12,8 @@ extern pid_t *PID_HIJOS;
 extern int N_HIJOS;
 pid_t *PID_HIJOS;
 int N_HIJOS;
-
+extern int* SIGINT_COUNTERS;
+int* SIGINT_COUNTERS;
 
 int main(int argc, char *argv[])
 {
@@ -69,6 +70,9 @@ int main(int argc, char *argv[])
 	 */
 	PID_HIJOS = crearHijos(N_HIJOS);
 
+	//Para saber si a un hijo ya se le envio una señal SIGINT
+	SIGINT_COUNTERS = calloc(N_HIJOS, sizeof(int));
+
 	if(mFlag){
 		printChildInfo(PID_HIJOS,N_HIJOS);
 	}
@@ -89,9 +93,12 @@ int main(int argc, char *argv[])
 		if(sigTo > 0 && sigTo <= N_HIJOS && PID_HIJOS[sigTo-1] != 0){
 			switch(sigId){
 				case 2:
+					
 					if(kill(PID_HIJOS[sigTo-1],SIGINT)==-1){
-						printf("No se pudo mandar la sena SIGINTl\n");
-					}else{
+						printf("No se pudo mandar la senal SIGINTl\n");
+					}else if (SIGINT_COUNTERS[sigTo-1] == 0){
+						SIGINT_COUNTERS[sigTo-1] = 1;
+					} else {
 						waitpid(PID_HIJOS[sigTo-1], &wStatus, 0);
 					}
 

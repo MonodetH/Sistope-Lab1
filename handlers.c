@@ -12,6 +12,9 @@ int SIGUSR1_COUNTER;
 pid_t *PID_HIJOS;		// Hijos del root
 pid_t PID_NIETO; 		// Solo un nieto
 int N_HIJOS;
+int* SIGINT_COUNTERS;
+
+int SIGINT_COUNTER; //contador local usado por procesos hijos. Para reconocer si ya se recibio un SIGINT
 
 void handlerUSR1(int sig){
 	SIGUSR1_COUNTER++;
@@ -47,16 +50,32 @@ void handlerTERM(int sig){
 }
 
 void handlerINT(int sig){
+	/*
 	int i,wStatus;
 	// mandar SIGINT a todos los hijos
 	for (i = 0; i < N_HIJOS; i++){
+		
 		if(kill(PID_HIJOS[i],SIGINT)==-1){
 			printf("No se pudo mandar la senal SIGINT a hijo %i\n",PID_HIJOS[i]);
 		}else{
 			// esperar al hijo
 			waitpid(PID_NIETO, &wStatus, 0);
 		}
+		
+		//waitpid(PID_NIETO, &wStatus, 0);
+	} 
+	*/
+	int i, wStatus;
+	for (i = 0; i < N_HIJOS; i++) {
+		if(SIGINT_COUNTERS[i] == 1) {
+			waitpid(PID_HIJOS[i], &wStatus, 0);
+		} else {
+			SIGINT_COUNTERS[i] = 1;
+		}
+		
 	}
+
+
 	// restaurar SIGINT del padre
 	if(signal(SIGINT,SIG_DFL) == SIG_ERR)
 		printf("No se pudo asignar handler\n");
@@ -64,10 +83,34 @@ void handlerINT(int sig){
 }
 
 void handlerINTh(int sig){
-	printf("<Soy el hijo con pid: %i, y estoy vivo aun>\n",getpid());
+	
+	int wStatus;
+
+	if(SIGINT_COUNTER == 0) {
+		printf("<Soy el hijo con pid: %i, y estoy vivo aun>\n",getpid());
+		SIGINT_COUNTER = 1;
+		if(PID_NIETO != 0) {
+			if(kill(PID_NIETO,SIGINT)==-1){
+				printf("No se pudo mandar la senal\n");
+			}
+		}
+	} else {
+		if(PID_NIETO != 0) {
+			if(kill(PID_NIETO,SIGINT)==-1){
+				printf("No se pudo mandar la senal\n");
+			}
+			// esperar al hijo
+			waitpid(PID_NIETO,&wStatus,0);
+		}
+
+		exit(0);
+	}
+
+	/*
 	// restaurar SIGINT de los hijos
 	if(signal(SIGINT,SIG_DFL) == SIG_ERR)
 		printf("No se pudo asignar handler\n");
+	*/
 	return;
 }
 

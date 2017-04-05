@@ -86,6 +86,7 @@ void handlerINTh(int sig){
 	
 	int wStatus;
 
+	//Si no ha recibido antes un SIGINT
 	if(SIGINT_COUNTER == 0) {
 		printf("<Soy el hijo con pid: %i, y estoy vivo aun>\n",getpid());
 		SIGINT_COUNTER = 1;
@@ -95,6 +96,7 @@ void handlerINTh(int sig){
 			}
 		}
 	} else {
+	//De haber recibido ya un SIGINT. 
 		if(PID_NIETO != 0) {
 			if(kill(PID_NIETO,SIGINT)==-1){
 				printf("No se pudo mandar la senal\n");
